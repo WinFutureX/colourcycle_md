@@ -116,16 +116,17 @@ startup:
 		tst.l	$A1000C						; test port C control register
 		bne.s	initz80						; was it a soft reset?
 		move.b	$A10001, d0					; get HW ver
-		andi.b	#$0F, d0
+		andi.b	#$0F, d0					; compare to rev 0
 		beq.s	initz80						; non-TMSS systems only, otherwise...
 		move.l	#"SEGA", $A14000				; make the TMSS happy
 
+; z80 initialization area
 initz80:
 		move.w	#$100, z80req					; request z80 bus
 		move.w	#$100, z80reset					; reset z80
 
 z80wait:
-		btst	#$0, $A11100					; is bus access granted?
+		btst	#$0, z80req					; is bus access granted?
 		bne.s	z80wait						; if not, branch
 		lea	z80code, a1
 		lea	z80ram, a2					; target z80 ram space ($A00000-$A0FFFF)
@@ -134,34 +135,35 @@ z80wait:
 z80loop:
 		move.b	(a1)+, (a2)+					; copy code to z80 ram
 		dbf	d1, z80loop					; copy until finished
+		bra.w	z80end						; finish up
 
 ; z80 startup instructions		
 z80code:
-		dc.b	$AF						; xor		a
-		dc.b	$01, $D9, $1F					; ld		bc,1fd9h
-		dc.b	$11, $27, $00					; ld		de,0027h
-		dc.b	$21, $26, $00					; ld		hl,0026h
-		dc.b	$F9						; ld		sp,hl
-		dc.b	$77						; ld		(hl),a
+		dc.b	$AF						; xor	a
+		dc.b	$01, $D9, $1F					; ld	bc,1fd9h
+		dc.b	$11, $27, $00					; ld	de,0027h
+		dc.b	$21, $26, $00					; ld	hl,0026h
+		dc.b	$F9						; ld	sp,hl
+		dc.b	$77						; ld	(hl),a
 		dc.b	$ED, $B0					; ldir
-		dc.b	$DD, $E1					; pop		ix
-		dc.b	$FD, $E1					; pop		iy
-		dc.b	$ED, $47					; ld		i,a
-		dc.b	$ED, $4F					; ld		r,a
-		dc.b	$D1						; pop		de
-		dc.b	$E1						; pop		hl
-		dc.b	$F1						; pop		af
-		dc.b	$08						; ex		af,af'
+		dc.b	$DD, $E1					; pop	ix
+		dc.b	$FD, $E1					; pop	iy
+		dc.b	$ED, $47					; ld	i,a
+		dc.b	$ED, $4F					; ld	r,a
+		dc.b	$D1						; pop	de
+		dc.b	$E1						; pop	hl
+		dc.b	$F1						; pop	af
+		dc.b	$08						; ex	af,af'
 		dc.b	$D9						; exx
-		dc.b	$C1						; pop		bc
-		dc.b	$D1						; pop		de
-		dc.b	$E1						; pop		hl
-		dc.b	$F1						; pop		af
-		dc.b	$F9						; ld		sp,hl
+		dc.b	$C1						; pop	bc
+		dc.b	$D1						; pop	de
+		dc.b	$E1						; pop	hl
+		dc.b	$F1						; pop	af
+		dc.b	$F9						; ld	sp,hl
 		dc.b	$F3						; di
 		dc.b	$ED, $56					; im1
-		dc.b	$36, $E9					; ld		(hl),e9h
-		dc.b	$E9						; jp		(hl)
+		dc.b	$36, $E9					; ld	(hl),e9h
+		dc.b	$E9						; jp	(hl)
 		
 z80end:
 		move.w	#$0, z80req					; release z80 bus
@@ -188,13 +190,16 @@ initvdp:
 		move.l	#$93009400, (a0)				; reg $93/94: dma length
 		move.l	#$95009700, (a0)				; reg $95/97: dma source + dma fill vram
 
+laststeps:
+		moveq	#0, usp						; zero out usp (will this work?)
+
 main:
 		moveq	#0, d0						; clear d0
 		move.w	#$8F00, vdpctrl					; always assume word increment
 		move.l	#$C0000003, vdpctrl				; cram write mode
 		
 main_loop:
-		move.w	d0, vdpdata					; write prev value (if loop)
+		move.w	d0, vdpdata					; write prev value (if loop >=1)
 		add.w	#1, d0						; add one to change colour
 		move.w	#100, d1					; how long to delay?
 
