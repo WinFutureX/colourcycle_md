@@ -3,19 +3,19 @@
 ; necessary equates for system
 
 ; reset system stack pointer
-initialssp:		equ	$8FFFFF00
+initialssp:	equ	$8FFFFF00
 
 ; z80 bus request, reset and ram addrs
-z80req:			equ	$A11100
-z80reset:		equ	$A11200
-z80ram:			equ	$A00000
+z80req:		equ	$A11100
+z80reset:	equ	$A11200
+z80ram:		equ	$A00000
 
 ; vdp control and data ports
-vdpctrl:		equ	$C00004
-vdpdata:		equ	$C00000
+vdpctrl:	equ	$C00004
+vdpdata:	equ	$C00000
 
 ; sn76489 psg (byte-addressing only)
-psg:			equ	$C00011
+psg:		equ	$C00011
 
 ; cart header and 68k vectors
 vectors:
