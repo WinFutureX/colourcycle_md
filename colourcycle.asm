@@ -194,13 +194,13 @@ main:
 		move.l	#$C0000003, vdpctrl				; cram write mode
 		
 main_loop:
-		move.w	d0, vdpdata					; write zeroes to vdp data port
+		move.w	d0, vdpdata					; write prev value (if loop)
 		add.w	#1, d0						; add one to change colour
 		move.w	#100, d1					; how long to delay?
 
 main_wait:
-		dbf		d1, main_wait				; coded like this for extra delay
-		jmp		main_loop				; should give us a mostly straight line
+		dbf	d1, main_wait					; coded like this for extra delay
+		jmp	main_loop					; should give us a mostly straight line
 
 ; dma or midframe cram swaps not used here
 useless:
